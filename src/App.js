@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaSearch } from "react-icons/fa";
 import Photo from "./Photo";
 import "./App.css";
@@ -10,6 +10,7 @@ function App() {
   const [photos, setPhotos] = useState([]);
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
+  let mounted = useRef(false);
   const fetchImages = async () => {
     setLoading(true);
     let url;
@@ -21,45 +22,42 @@ function App() {
     }
 
     try {
-      console.log(url);
       const response = await fetch(url);
       const data = await response.json();
       setLoading(false);
       setPhotos((oldPhotos) => {
-        if (query) {
+        if (query && page === 1) {
+          return data.results;
+        } else if (query) {
           return [...oldPhotos, ...data.results];
         } else {
           return [...oldPhotos, ...data];
         }
       });
-      console.log(data);
     } catch (err) {
       setLoading(false);
-      console.log(err);
+      console.log(err.message);
     }
   };
   useEffect(() => {
     fetchImages();
   }, [page]);
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted = true;
+      return;
+    }
+    console.log("second");
+  }, []);
   const handleSubmit = (e) => {
     e.preventDefault();
-    fetchImages();
-    console.log("ss");
+    if (!query) return;
+    if (page === 1) {
+      fetchImages();
+    }
+    setPage(1);
   };
-  useEffect(() => {
-    const event = window.addEventListener("scroll", () => {
-      if (
-        !loading &&
-        window.innerHeight + window.scrollY >= document.body.scrollHeight
-      ) {
-        console.log("dziala");
-        setPage(page + 1);
-      }
-    });
-    return () => {
-      window.removeEventListener("scroll", event);
-    };
-  }, []);
+
   return (
     <main>
       <section className="search">
