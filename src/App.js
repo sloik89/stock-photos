@@ -10,6 +10,7 @@ function App() {
   const [photos, setPhotos] = useState([]);
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
+  const [newImages, setNewImages] = useState(false);
   let mounted = useRef(false);
   const fetchImages = async () => {
     setLoading(true);
@@ -24,7 +25,7 @@ function App() {
     try {
       const response = await fetch(url);
       const data = await response.json();
-      setLoading(false);
+
       setPhotos((oldPhotos) => {
         if (query && page === 1) {
           return data.results;
@@ -34,6 +35,8 @@ function App() {
           return [...oldPhotos, ...data];
         }
       });
+      setNewImages(false);
+      setLoading(false);
     } catch (err) {
       setLoading(false);
       console.log(err.message);
@@ -44,10 +47,28 @@ function App() {
   }, [page]);
   useEffect(() => {
     if (!mounted.current) {
-      mounted = true;
+      mounted.current = true;
       return;
     }
+    if (!newImages) return;
+    if (loading) {
+      return;
+    }
+    setPage((oldPage) => {
+      return oldPage + 1;
+    });
     console.log("second");
+  }, [newImages]);
+  const event = () => {
+    if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 1) {
+      setNewImages(true);
+    }
+  };
+  useEffect(() => {
+    window.addEventListener("scroll", event);
+    return () => {
+      window.removeEventListener("scroll", event);
+    };
   }, []);
   const handleSubmit = (e) => {
     e.preventDefault();
